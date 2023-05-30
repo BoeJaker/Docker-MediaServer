@@ -1,0 +1,7 @@
+.env
+.shared-torrents
+.shared-downlods
+**/config/**
+**/data/**
+**/blackhole/**
+**/Library/**

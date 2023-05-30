@@ -1,0 +1,121 @@
+version: '3'
+
+services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+      # - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      # - SERVERURL=wireguard.domain.com #optional
+      # - SERVERPORT=51820 #optional
+      # - PEERS=1 #optional
+      # - PEERDNS=auto #optional
+      # - INTERNAL_SUBNET=10.13.13.0 #optional
+      # - ALLOWEDIPS=0.0.0.0/0 #optional
+      # - PERSISTENTKEEPALIVE_PEERS= #optional
+      # - LOG_CONFS=true #optional
+    volumes:
+      - ./vpn/config:/config
+      - ./vpn/data:/lib/modules #optional
+    ports:
+      - 51820:51820/udp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - AUTO_UPDATE=true #optional
+      # - RUN_OPTS= #optional
+      - JACKETT_PROXY_TYPE=http
+      - JACKETT_PROXY_HOST=vpn
+      - JACKETT_PROXY_PORT=51820
+    volumes:
+      - ./jackett/config:/config
+      - shared-torrents:/torrents  # Folder for Jackett to save torrent files
+    ports:
+      - 9117:9117
+    restart: always
+
+  qbittorrent:
+    image: wernight/qbittorrent:stable
+    environment:
+      - PUID=1000 # Replace with your user ID
+      - PGID=1000  # Replace with your group ID
+      - TZ=Etc/UTC # Replace with your timezone (e.g., "America/New_York")
+      - WEBUI_PORT=8080  # Port for qBittorrent web UI
+      - VPN_ENABLED=true  # Enable VPN for qBittorrent
+      - VPN_TYPE=openvpn  # Use OpenVPN as VPN type
+      - VPN_USERNAME=$VPN_USER  # Replace with your VPN username
+      - VPN_PASSWORD=$VPN_PASSWORD  # Replace with your VPN password
+      - VPN_REMOTE=vpn:1194  # Reference the OpenVPN container using its service name and the appropriate port
+      - VPN_OPTIONS=--config /vpn/config/protonvpn.ovpn 
+    volumes:
+      - ./qbittorrent/config:/config
+      - shared-torrents:/torrents
+      - shared-downloads:/downloads
+    ports:
+      - 6881:6881
+      - 6881:6881/udp
+      - 8080:8080
+    restart: always
+
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    network_mode: bridge
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - VERSION=docker
+      - PLEX_CLAIM= #optional
+    ports:
+      - 32400:32400 # Media Server
+      - 1900:1900 # DLNA
+      - 32469:32469 # DLNA
+      - 5353:5353 # Bonjour
+      - 8324:8324 # Plex companion
+    volumes:
+      - ./plex:/config
+      - shared-downloads:/downloads  # Replace with your media directory
+    restart: always
+
+# networks:
+#   local:
+#   private:
+#   usenet:
+
+volumes:
+  
+  shared-downloads:
+    driver: local
+    driver_opts:
+      type: none
+      device: "/media/boejaker/Seagate Wireless"
+      o: bind
+
+  shared-files:
+    driver: local
+    driver_opts:
+      type: none
+      device: "/media/boejaker/New Volume"
+      o: bind
+
+  shared-torrents:
+    driver: local
+    driver_opts:
+      type: none
+      device: /media/torrents
+      o: bind
+
