@@ -57,7 +57,7 @@ services:
       - ${JACKET_PORT}:9117
     restart: always
 
-   qbittorrent:
+  qbittorrent:
     image: wernight/qbittorrent:stable
     environment:
       - PUID=${PUID}
