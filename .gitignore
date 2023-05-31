@@ -1,7 +1,10 @@
 .env
 .shared-torrents
 .shared-downlods
+.shared-files
+media/**
 **/config/**
 **/data/**
 **/blackhole/**
 **/Library/**
+**/logs/**
