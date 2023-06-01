@@ -16,3 +16,4 @@ EXPOSE 6881 6881/udp
 
 # Start the WireGuard VPN connection
 CMD ["sh", "-c", "wg-quick up /etc/wireguard/wg0.conf && qbittorrent-nox"]
+ 
