@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Docker Compose Services</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-size: 30;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .not-available {
+            color: #888888;
+        }
+    </style>
+</head>
+<body>
+    <h1>Docker Compose Services</h1>
+    <table>
+        <tr>
+            <th>Service</th>
+            <th>Repo</th>
+            <th>Status</th>
+            <th>Link</th>
+            <th>CPU (%)</th>
+            <th>Memory (%)</th>
+            <th>Start Container</th>
+            <th>Stop Container</th>
+        </tr>
+        {% for service in services %}
+            <tr>
+                <td><b>{{ service.service }}</b></td>
+                <td>{{ service.repo }}</td>
+                <td>{{ service.status }}</td>
+                <td>{% if service.port %}<a href="{{ service.port }}" target="_blank">Link</a>{% else %}Not available{% endif %}</td>
+                <td>{{ service.cpu_percent }}</td>
+                <td>{{ service.memory_percent }}</td>
+                <td><a href="{{ service.start }}">Start</a></td>
+                <td><a href="{{ service.stop }}">Stop</a></td>
+            </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
+
+
+
+
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>Collapsible Sidebar</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 200px;
+            background-color: #f1f1f1;
+            padding: 20px;
+            transition: transform 0.3s ease-in-out;
+            overflow-y: auto;
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-200px);
+        }
+        
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar li {
+            margin-bottom: 10px;
+        }
+        
+        .content {
+            margin-left: 200px;
+            padding: 20px;
+            height: 96vh;
+        }
+        
+        .toggle-btn {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        function toggleSidebar() {
+            var sidebar = document.getElementById("sidebar");
+            sidebar.classList.toggle("collapsed");
+        }
+        
+        function loadContent(url) {
+            var content = document.getElementById("content");
+            content.innerHTML = "<iframe src='" + url + "' style='width: 100%; height: 100%; border: none;'></iframe>";
+        }
+    </script>
+</head>
+<body>
+    <div id="sidebar" class="sidebar">
+        <ul>
+            <li><a href="#" onclick="loadContent('http://vnc.int')">VNC</a></li>
+            <li><a href="#" onclick="loadContent('ftp://games.int')">FTP Games</a></li>
+            <li><a href="#" onclick="loadContent('http://ubuntu-client.int')">Ubuntu Client</a></li>
+            <li><a href="#" onclick="loadContent('http://llm.int')">Assistant</a></li>
+            <li><a href="#" onclick="loadContent('http://Kali.int')">Kali</a></li>
+            <li><a href="#" onclick="loadContent('http://Metaspolit.int')">Metasploit</a></li>
+        </ul>
+    </div>
+    <div id="content" class="content">
+        Click on a link from the sidebar to load content here.
+    </div>
+    <div class="toggle-btn" onclick="toggleSidebar()">&#9776;</div>
+</body>
+</html> -->
