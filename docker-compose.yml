@@ -2,6 +2,7 @@ version: '3'
 
 services:
 
+  # Virtual-network interfaces
   twingate:
     image: twingate/connector:1
     environment:
@@ -36,8 +37,10 @@ services:
       - ${WIREGUARD_PORT}:51820/udp
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
-    restart: unless-stopped
+    restart: always
 
+
+  # Torrent indexing and download
   jackett:
     image: lscr.io/linuxserver/jackett:latest
     container_name: jackett
@@ -58,14 +61,15 @@ services:
     restart: always
 
   qbittorrent:
-    image: wernight/qbittorrent:stable
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ} 
       - WEBUI_PORT=8080  # Port for qBittorrent web UI
     volumes:
-      - ./vpn/config:/config/wireguard
+      - ./qbittorrent/config:/config
       - ${TORRENTS}:/torrents
       - ${DOWNLOADS}:/downloads
     ports:
@@ -74,6 +78,7 @@ services:
       - ${QBITTORRENT_HTTP_PORT}:8080
     restart: always
 
+  # Media Server
   plex:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
@@ -93,8 +98,11 @@ services:
     volumes:
       - ./plex:/config
       - ${DOWNLOADS}:/downloads  # Replace with your media directory
+      - ${FILMS}:/films
+      - ${TV_SHOWS}:/tv
     restart: always
 
+  # Cloud Server
   owncloud:
     image: owncloud/server:${OWNCLOUD_VERSION}
     container_name: owncloud_server
@@ -122,9 +130,9 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-    volumes:
+    # volumes:
       # - ./OP:/mnt/data
-      - ${FILES}:/mnt/data/files/boejaker/files
+      # - ${FILES}:/mnt/data/files/boejaker/files
       # - shared-files:/mnt/data
 
   mariadb:
@@ -158,46 +166,47 @@ services:
     volumes:
       - redis:/data
   
+  # Retroarch Server
   retroarch:
     image: inglebard/retroarch-web
     ports:
       - ${RETROARCH_HTTP_PORT}:80 
     volumes:
-      - ${files}:/ROMS
+      - ${FILES}:/ROMS
 
-  clamav:
-    image: clamav/clamav
-    volumes:
-      - ${FILES}:/scan
-      - ${CLAM_AV_LOG}:/var/log/clamav
-    environment:
-      - CLAMAV_EXTRA_ARGS=--cross-fs=all
+  # clamav:
+  #   image: clamav/clamav
+  #   volumes:
+  #     - ${FILES}:/scan
+  #     - ${CLAM_AV_LOG}:/var/log/clamav
+  #   environment:
+  #     - CLAMAV_EXTRA_ARGS=--cross-fs=all
 
-  prometheus:
-    image: prom/prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - 9090:9090
+  # prometheus:
+  #   image: prom/prometheus
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  #   ports:
+  #     - 9090:9090
 
-  grafana:
-    image: grafana/grafana
-    ports:
-      - 3000:3000
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=your_password
-    volumes:
-      - grafana_data:/var/lib/grafana
+  # grafana:
+  #   image: grafana/grafana
+  #   ports:
+  #     - 3000:3000
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=your_password
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
 
-  cadvisor:
-    image: google/cadvisor
-    ports:
-      - 8080:8080
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /var/lib/docker:/var/lib/docker:ro
+  # cadvisor:
+  #   image: google/cadvisor
+  #   ports:
+  #     - 8080:8080
+  #   volumes:
+  #     - /:/rootfs:ro
+  #     - /var/run:/var/run:rw
+  #     - /sys:/sys:ro
+  #     - /var/lib/docker:/var/lib/docker:ro
 
 # networks:
 #   local:
