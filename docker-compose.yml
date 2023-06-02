@@ -64,7 +64,9 @@ services:
     restart: always
 
   qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:latest
+    build: 
+      context: ./
+      dockerfile: ./qbittorrent/.Dockerfile
     container_name: qbittorrent
     environment:
       - PUID=${PUID}
@@ -137,6 +139,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    volumes:
+      - ./owncloud/config.php /conf/config.php
     # volumes:
       # - ./OP:/mnt/data
       # - ${FILES}:/mnt/data/files/boejaker/files
@@ -179,41 +183,49 @@ services:
     ports:
       - ${RETROARCH_HTTP_PORT}:80 
     volumes:
-      - ${FILES}:/ROMS
+      - ${FILES}:/var/www/html/assets/cores/ROMS
 
-  # clamav:
-  #   image: clamav/clamav
-  #   volumes:
-  #     - ${FILES}:/scan
-  #     - ${CLAM_AV_LOG}:/var/log/clamav
-  #   environment:
-  #     - CLAMAV_EXTRA_ARGS=--cross-fs=all
+  emu:
+    image: linuxserver/emulatorjs
+    ports:
+      - 3333:3000
+      - 7778:80
+    volumes:
+      - ${FILES}:/data/nes/roms
 
-  # prometheus:
-  #   image: prom/prometheus
-  #   volumes:
-  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
-  #   ports:
-  #     - 9090:9090
+  clamav:
+    image: clamav/clamav
+    volumes:
+      - ${FILES}:/scan
+      - ${CLAM_AV_LOG}:/var/log/clamav
+    environment:
+      - CLAMAV_EXTRA_ARGS=--cross-fs=all
 
-  # grafana:
-  #   image: grafana/grafana
-  #   ports:
-  #     - 3000:3000
-  #   environment:
-  #     - GF_SECURITY_ADMIN_PASSWORD=your_password
-  #   volumes:
-  #     - grafana_data:/var/lib/grafana
+  prometheus:
+    image: prom/prometheus
+    # volumes:
+      # - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
 
-  # cadvisor:
-  #   image: google/cadvisor
-  #   ports:
-  #     - 8080:8080
-  #   volumes:
-  #     - /:/rootfs:ro
-  #     - /var/run:/var/run:rw
-  #     - /sys:/sys:ro
-  #     - /var/lib/docker:/var/lib/docker:ro
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=your_password
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  cadvisor:
+    image: google/cadvisor
+    ports:
+      - 808:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
 
 networks:
   vpn:
