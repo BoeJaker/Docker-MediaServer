@@ -12,37 +12,6 @@ services:
       - TWINGATE_LABEL_HOSTNAME=${TWINGATE_LABEL_HOSTNAME}
     restart: always
 
-  vpn:
-    image: lscr.io/linuxserver/wireguard:latest
-    container_name: vpn
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      # - SERVERURL=wireguard.domain.com #optional
-      # - SERVERPORT=51820 #optional
-      - PEERS=10 #optional
-      # - PEERDNS=auto #optional
-      # - INTERNAL_SUBNET=10.13.13.0 #optional
-      - ALLOWEDIPS=0.0.0.0/0 #optional
-      # - PERSISTENTKEEPALIVE_PEERS= #optional
-      # - LOG_CONFS=true #optional
-    volumes:
-      - ./vpn/config:/config
-      - ./vpn/data:/lib/modules #optional
-    ports:
-      - ${WIREGUARD_PORT}:51820/udp
-    sysctls:
-      - net.ipv4.conf.all.src_valid_mark=1
-      # - net.ipv6.conf.all.disable_ipv6=0
-    restart: always
-    networks:
-      - vpn
-
-
   # Torrent indexing and download
   jackett:
     image: lscr.io/linuxserver/jackett:latest
@@ -64,15 +33,28 @@ services:
     restart: always
 
   qbittorrent:
-    build: 
-      context: ./
-      dockerfile: ./qbittorrent/.Dockerfile
+    image: dyonr/qbittorrentvpn
+    # image: lscr.io/linuxserver/qbittorrent:latest
+    # build:
+    #   context: ./
+    #   dockerfile: ./qbittorrent/.Dockerfile
+    # privileged: true
     container_name: qbittorrent
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv4.ip_forward=1
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_MODULE
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ} 
-      - WEBUI_PORT=8080  # Port for qBittorrent web UI
+      - WEBUI_PORT=8080  # Port for qbittorrent web UI
+      - VPN_TYPE=wireguard
+      - LAN_NETWORK=192.168.0.0/16
+      - VPN_ENABLED=yes
     volumes:
       - ./qbittorrent/config:/config
       - ${TORRENTS}:/torrents
@@ -81,29 +63,26 @@ services:
       - ${QBITTORRENT_REQUEST_PORT}:6881
       - ${QBITTORRENT_REQUEST_PORT}:6881/udp
       - ${QBITTORRENT_HTTP_PORT}:8080
-    networks:
-      - vpn
-    links:
-      - vpn
     restart: always
+
 
   # Media Server
   plex:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
-    network_mode: bridge
+    network_mode: host
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
       - VERSION=docker
       # - PLEX_CLAIM=${PLEX_CLAIM}
-    ports:
-      - ${PLEX_HTTP_PORT}:32400 # Media Server
-      - ${PLEX_DLNA_1_PORT}:1900 # DLNA
-      - ${PLEX_DLNA_2_PORT}:32469 # DLNA
-      - ${PLEX_BONJOUR_PORT}:5353 # Bonjour
-      - ${PLEX_COMPANION_PORT}:8324 # Plex companion
+    # ports:
+    #   - ${PLEX_HTTP_PORT}:32400 # Media Server
+    #   - ${PLEX_DLNA_1_PORT}:1900 # DLNA
+    #   - ${PLEX_DLNA_2_PORT}:32469 # DLNA
+    #   - ${PLEX_BONJOUR_PORT}:5353 # Bonjour
+    #   - ${PLEX_COMPANION_PORT}:8324 # Plex companion
     volumes:
       - ./plex:/config
       - ${DOWNLOADS}:/downloads  # Replace with your media directory
@@ -183,7 +162,7 @@ services:
     ports:
       - ${RETROARCH_HTTP_PORT}:80 
     volumes:
-      - ${FILES}:/var/www/html/assets/cores/ROMS
+      - ${GAMES}:/var/www/html/assets/cores/ROMS
 
   emu:
     image: linuxserver/emulatorjs
@@ -226,12 +205,6 @@ services:
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker:/var/lib/docker:ro
-
-networks:
-  vpn:
-    driver: bridge
-#   private:
-#   usenet:
 
 volumes:
   grafana_data:
