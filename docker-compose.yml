@@ -182,8 +182,8 @@ services:
 
   prometheus:
     image: prom/prometheus
-    # volumes:
-      # - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - 9090:9090
 
@@ -197,9 +197,9 @@ services:
       - grafana_data:/var/lib/grafana
 
   cadvisor:
-    image: google/cadvisor
+    image: gcr.io/cadvisor/cadvisor
     ports:
-      - 808:8080
+      - 8082:8080
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
