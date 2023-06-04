@@ -12,6 +12,15 @@ services:
       - TWINGATE_LABEL_HOSTNAME=${TWINGATE_LABEL_HOSTNAME}
     restart: always
 
+  # Reverse proxy
+  reverse_proxy:
+    container_name: reverse_proxy
+    build:
+      context: ./
+      dockerfile: ./reverse_proxy/.Dockerfile
+    ports:
+      - 80:80
+
   # Torrent indexing and download
   jackett:
     image: lscr.io/linuxserver/jackett:latest
@@ -186,6 +195,9 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - 9090:9090
+    links:
+      - cadvisor:cadvisor
+      - grafana:grafana
 
   grafana:
     image: grafana/grafana
