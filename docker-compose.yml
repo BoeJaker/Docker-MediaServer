@@ -212,6 +212,7 @@ services:
 
   grafana:
     image: grafana/grafana
+    container_name: grafana
     ports:
       - ${GRAFANA_PORT}:3000
     environment:
@@ -222,6 +223,7 @@ services:
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor
+    container_name: cadvisor
     ports:
       - ${CADVISOR_PORT}:8080
     volumes:
@@ -229,6 +231,7 @@ services:
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     restart: always
 
 volumes:
