@@ -4,7 +4,7 @@
 [](./resorces/retroarch.jpg)
 
 # Features
-## 
+
 ## Twingate
 Routes hosts to internal addresses.
 Twingate requires an account and authentication keys to be set up. It takes 5 to 10 minutes and its free.

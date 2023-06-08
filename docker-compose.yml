@@ -151,8 +151,10 @@ services:
       timeout: 10s
       retries: 5
     volumes:
-      - "${OWNCLOUD_CONFIG}:/conf/config.php"
-      - "${FILES}:/mnt/data/files/boejaker/files"
+      # - "${OWNCLOUD_CONFIG}:/conf/config.php"
+      - "${FILES}:/mnt/data/files/boejaker/files/home"
+      - "${MOUNT_A}:/mnt/data/files/boejaker/files/mount_a"
+      - "${MOUNT_B}:/mnt/data/files/boejaker/files/mount_b"
 
   mariadb:
     image: mariadb:10.6 # minimum required ownCloud version is 10.9
@@ -200,13 +202,15 @@ services:
       - ${EMU_BACKEND_PORT}:3000
       - ${EMU_FRONTEND_PORT}:80
     volumes:
-      - "${FILES}:/data/nes/roms"
+      - "${GAMES}:/data/nes/roms"
     restart: always
 
   clamav:
     image: clamav/clamav
     volumes:
-      - "${FILES}:/scan"
+      - "${FILES}:/scan/home"
+      - "${MOUNT_A}:/scan/mount_a"
+      - "${MOUNT_B}:/scan/mount_b"
       - "${CLAM_AV_LOG}:/var/log/clamav"
     environment:
       - CLAMAV_EXTRA_ARGS=--cross-fs=all
