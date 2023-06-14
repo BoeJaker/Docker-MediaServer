@@ -3,6 +3,11 @@ import re
 import yaml
 from flask import Flask, render_template, redirect
 import os, time
+from dotenv import load_dotenv
+
+load_dotenv()
+
+MY_ENV_VAR = os.getenv('MY_ENV_VAR')
 
 app = Flask(__name__)
 
@@ -19,19 +24,17 @@ def get_container_status(container):
 
 def get_container_port(service_config):
     ports = service_config.get('ports')
+    print(ports)
     if ports:
         # Assuming only one port mapping for simplicity
         port_mapping = ports[0].split(':')
-        host_port = port_mapping[0]
-        return f"http://localhost:{host_port}"
+        host_port = os.getenv(re.sub("\$|\{|\}", "", port_mapping[0]))
+        return f"http://192.168.3.135:{host_port}"
     return None
 
 def fuzzy_search(container_names, service_name):
-    pattern = fr"{stack_name}-{service_name}-[0-9]*"  # Regex pattern
-    regex = re.compile(re.escape(pattern))
-
     for container_name in container_names:
-        if regex.match(container_name):
+        if service_name in container_name:
             return container_name
 
     return None
@@ -39,7 +42,7 @@ def get_container_stats(container):
     stats = container.stats(stream=False)
     cpu_percent = None
     memory_percent = None
-
+    print(stats)
     if 'cpu_stats' in stats and 'cpu_usage' in stats['cpu_stats']:
         cpu_stats = stats['cpu_stats']
         cpu_usage = cpu_stats['cpu_usage']['total_usage']
@@ -62,19 +65,20 @@ def index():
     client = docker.from_env()
     services = get_services()
     container_names = [container.name for container in client.containers.list()]
+    print(container_names)
     service_data = []
 
     for service, config in services.items():
         matched_name = fuzzy_search(container_names, service)
         if matched_name:
             repo=None
-
+            print(matched_name)
             container = client.containers.get(matched_name)
             cpu_percent, memory_percent = get_container_stats(container)
             status = get_container_status(container)
             port = get_container_port(config)
-            start = f"http://localhost:5000/start/{service}"
-            stop = f"http://localhost:5000/stop/{service}"
+            start = f"http://192.168.3.135:5000/start/{matched_name}"
+            stop = f"http://192.168.3.135:5000/stop/{matched_name}"
             repo = config.get('client_repo')
             print(config)
 
@@ -89,9 +93,11 @@ def index():
                 'stop' : stop
 
             })
+            print(service_data)
         else:
-            start = f"http://localhost:5000/start/{service}"
-            stop = f"http://localhost:5000/stop/{service}"
+            print(f"no match for {service}")
+            start = f"http://192.168.3.135:5000/start/{service}"
+            stop = f"http://192.168.3.135:5000/stop/{service}"
 
             service_data.append({
                 'service': service,
@@ -134,4 +140,4 @@ def stop_all():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0")

@@ -22,7 +22,7 @@ services:
     restart: always
 
   # Reverse proxy
-  reverse-proxy:
+  reverse_proxy:
     container_name: reverse-proxy
     build:
       context: ./
@@ -101,7 +101,6 @@ services:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
     network_mode: host
-
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -121,16 +120,7 @@ services:
       - "${DOWNLOADS}:/downloads"  # Replace with your media directory
       - "${FILMS}:/films"
       - "${TV_SHOWS}:/tv"
-
-    # healthcheck:
-    #   test: ["CMD-SHELL", "/healthchecks/file_permissions.sh", "/", "rw" ]
-    #   interval: 24hr
-    #   timeout: 120s
-    #   start_period: 5s
-    #   retries: 2
-      
     restart: always
-
 
   # Cloud Server
   owncloud:
@@ -161,10 +151,10 @@ services:
       timeout: 10s
       retries: 5
     volumes:
-      - "${OWNCLOUD_CONFIG}:/conf/config.php"
-      - "${FILES}:/mnt/data/files/boejaker/files"
-      # - "${MOUNT_A}:/mnt/data/files/boejaker/files/mount_a"
-      # - "${MOUNT_B}:/mnt/data/files/boejakerfiles/mount_b"
+      # - "${OWNCLOUD_CONFIG}:/conf/config.php"
+      - "${FILES}:/mnt/data/files/boejaker/files/home"
+      - "${MOUNT_A}:/mnt/data/files/boejaker/files/mount_a"
+      - "${MOUNT_B}:/mnt/data/files/boejaker/files/mount_b"
 
   mariadb:
     image: mariadb:10.6 # minimum required ownCloud version is 10.9

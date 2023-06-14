@@ -9,3 +9,4 @@ media/**
 **/Library/**
 **/logs/**
 snyk-linux
+node_modules

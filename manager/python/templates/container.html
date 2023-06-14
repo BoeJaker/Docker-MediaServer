@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Container Detail - {{ container.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <input type="checkbox" id="menu-toggle">
+        <label for="menu-toggle" class="menu-btn">&#9776;</label>
+        <label for="menu-toggle" class="close-btn"></label>
+        <div class="sidebar">
+            <h1>Containers</h1>
+            <ul>
+                {% for container in containers %}
+                <li>
+                    <a href="{{ url_for('container_detail', container_id=container.id) }}">{{ container.name }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="content">
+            <h1>{{ container.name }}</h1>
+            <h2>Ports:</h2>
+            <ul>
+                {% for port in container.ports %}
+                <li>
+                    <a href="{{ port.url }}" target="iframe">{{ port.description }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+            <h2>Logs:</h2>
+            <pre>{{ container.logs() }}</pre>
+        </div>
+        <iframe name="iframe"></iframe>
+    </div>
+</body>
+</html>
