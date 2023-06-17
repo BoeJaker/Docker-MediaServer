@@ -10,3 +10,4 @@ media/**
 **/logs/**
 snyk-linux
 node_modules
+manager
