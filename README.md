@@ -106,15 +106,141 @@ Periodiccaly scans shared folders for known threats.
 
 </br>
 
-# Usage
+
+
+
+# Quickstart
+
+If your familiar with docker here is a quickstart guide so you can test the features.
+
+Open the .env.example file in the projects root directory, if your not using a vpn, set QBITTORRENTVPN to 'false' instead of 'true'. 
+
+If you have an account with twingate, include your endpoint keys in the appropriate variables and if you have a VPN provider point to the location of the config with the VPN_CONFIG variable.
+
+Amend the directories variable to match those of your systems media files
+
+Note any passwords and usernames in the env file as they are the defaults and will be needed later to access services. 
+Then save the file as .env
+
+The server can now be brought up with the docker command
+
+     docker-compose up plex qbittorrent jackett owncloud retroarch 
+
+if you did setup twingate simply tac 
+
+    twingate twingate_redundant 
+
+on the end.
+
+    docker-compose up plex qbittorrent jackett owncloud retroarch  twingate twingate_redundant 
+
+Feel free to disclude services from this statement or add flags such as -d.
+
+</br>
+
+# Usage Guide
 
 ## Prerequisites 
-Docker
-Twingate account
-VPN provider with support for p2p
+
+</br>
+
+### Docker - Required
+Visit the Docker website (https://www.docker.com/) and follow the instructions to install Docker for your operating system.
+Docker Compose typically comes bundled with Docker, so you don't need to install it separately.
+
+</br>
+
+### Twingate account - Optional
+Visit the Twingate website:
+
+Open a web browser and go to the Twingate website (https://www.twingate.com/).
+Sign up for an account:
+
+Click on the "Get Started" or "Sign Up" button on the Twingate homepage.
+Follow the registration process and provide the necessary information, such as your email address, name, and organization details.
+
+Set up your organization:
+
+Upon logging in, you will be prompted to set up your organization.
+Follow the on-screen instructions to configure your organization's name, domain, and other relevant details.
+
+Access the Admin Dashboard:
+
+After setting up your organization, you will be taken to the Twingate Admin Dashboard.
+The Admin Dashboard is where you can manage your organization's settings, users, and resources.
+
+Navigate to the Connectors section:
+
+In the Admin Dashboard, look for the "Connectors" tab or section.
+Click on it to access the Connectors configuration.
+
+Add a new Connector:
+
+To add a new Connector, click on the "Add Connector" or "New Connector" button.
+Follow the prompts to configure the Connector's details, such as its name and connection type.
+Twingate supports various types of Connectors, including Cloud Connectors, Network Connectors, and Identity Providers. Choose the appropriate type based on your requirements.
+
+Retrieve Connector details:
+
+Once you have added a Connector, you will be provided with specific details required for its configuration.
+You will need the authentication tokens.
+Note down or copy the necessary Connector details as you will need them to configure the Connector on your network or system.
+
+Configure the Connector:
+
+With the Connector details in hand, 
+
+</br>
+
+### VPN provider with support for p2p - Optional
+Visit the Mullvad website:
+
+Open a web browser and go to the Mullvad website (https://mullvad.net/).
+
+Sign up for an account:
+
+Click on the "Get started" or "Sign up" button on the Mullvad homepage.
+Follow the registration process and provide the necessary information, such as your email address and desired account details.
+
+Choose a payment method:
+
+Mullvad offers various payment options, including credit cards, PayPal, cryptocurrencies, and more.
+Select the payment method that suits you best and follow the instructions to complete the payment process.
+
+Generate a WireGuard configuration file:
+
+After logging in, navigate to the "Account" or "Settings" section of the Mullvad app.
+Look for an option to generate a WireGuard configuration file.
+Click on the "Generate" or "Download" button to create and download the WireGuard configuration file.
+Save the WireGuard configuration file:
+
+Choose a location on your device where you want to save the WireGuard configuration file.
+It is typically a .conf file or a file with a .conf extension.
+Make sure to remember the location where you save the file for later use.
+
+Set up Qbittorrent using the configuration file:
+
+</br>
+
+## Configuration
+
+Configuration is achieved through the .env file here you can set usernames, passwords, ports, directories and other key build info. To start configuration save a copy of .env.example as .env and open it for editing. 
+
+Each value is well described in the .env file, so they wont be outlined here. Each relates to environment variables used in the docker compose or within the containers themselves.
+
+To start the twingate service you must input your twingate apikeys into those fields. Otherwise it will raise an error if you try to start that container
+
+Volumes must be set for your media locations.
+
+Ports should be left in their default state unless you understand what you are doing.
+
+</br>
 
 ## Building
-Run the Docker Compose configuration:
+
+</br>
+
+# Run the Docker Compose configuration:
 
 Open a terminal or command prompt.
 Navigate to the directory where the Docker Compose file is located using the `cd` command.
@@ -145,14 +271,20 @@ If you need to start the services again after they have been stopped, use the fo
    
      docker-compose start
 
-You can also specify a specific service for many of these commands by appending the name to the command. Take plex for an example:
+You can also specify a specific service, or services, for many of these commands by appending them to the command. Take qbittorrent and plex for an example:
 
-    docker-compose up -d plex
+    docker-compose up -d plex qbittorrent
+
+</br>
 
 ## Scaling
-### Docker swarm
+The stack can be scaled in two ways. 
+Single host redundancy where multiple mirrored containers start for each servoce on one host.
+Multiple host redundancy with Docker Swarm where services and load can be distributed between multiple host machines. If you have a raspberry pi, you can make a swarm.
 
-### Redundancy
+### Single-Host Redundancy
 All containers can be built in multiples to create redundancy within the structure of the media server. Performance overhead is minmial, allowing for more robust connections to the containers. 
 
-## Maintaining
+### Docker swarm
+
+## Maintainence
