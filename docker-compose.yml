@@ -46,7 +46,7 @@ services:
     entrypoint: ["python","/index.py"]
     restart: always
 
-
+  
   # Torrent indexing and download
   jackett:
     image: lscr.io/linuxserver/jackett:latest
@@ -83,8 +83,9 @@ services:
       - TZ=${TZ} 
       - WEBUI_PORT=8080  # Port for qbittorrent web UI
       - VPN_TYPE=wireguard
-      - LAN_NETWORK=192.168.0.0/16
+      - LAN_NETWORK=192.168.3.0/24
       - VPN_ENABLED=yes
+      - HEALTH_CHECK_AMOUNT=0
     volumes:
       - "./qbittorrent/config:/config"
       - "${TORRENTS}:/torrents"
@@ -107,13 +108,6 @@ services:
       - PGID=${PGID}
       - TZ=${TZ}
       - VERSION=docker
-    # - PLEX_CLAIM=${PLEX_CLAIM}
-    # ports:
-    #   - ${PLEX_HTTP_PORT}:32400 # Media Server
-    #   - ${PLEX_DLNA_1_PORT}:1900 # DLNA
-    #   - ${PLEX_DLNA_2_PORT}:32469 # DLNA
-    #   - ${PLEX_BONJOUR_PORT}:5353 # Bonjour
-    #   - ${PLEX_COMPANION_PORT}:8324 # Plex companion
     expose:
       - 32400
     volumes:
@@ -253,7 +247,7 @@ services:
     image: gcr.io/cadvisor/cadvisor
     privileged: true
     container_name: cadvisor
-    user: 0:0
+    user: 10000:1000 # changed from 0:0
     ports:
       - ${CADVISOR_PORT}:8080
     volumes:
@@ -270,4 +264,6 @@ volumes:
     driver: local
   redis:
     driver: local
+
+
 
