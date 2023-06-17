@@ -1,5 +1,44 @@
 # Docker Media Server
 A complete media server with on-demand videos & games, a cloud file server and a backend for montitoring
+
+</br>
+
+# Table of contents
+
+- [Docker Media Server](#docker-media-server)
+- [Components & Features](#components--features)
+  - [Twingate](#twingate)
+  - [Reverse Proxy](#reverse-proxy)
+  - [Index](#index)
+  - [Jackett](#jackett)
+  - [Qbittorrent + Wireguard](#qbittorrent--wireguard)
+  - [Plex](#plex)
+  - [Retroarch](#retroarch)
+  - [Owncloud](#owncloud)
+  - [ClamAv](#clamav)
+  - [Metrics](#metrics)
+- [System Requirements](#system-requirements)
+  - [Recomended](#recomended)
+  - [Basic](#basic)
+  - [Swarm](#swarm)
+- [Limitations & Gotchas](#limitations--gotchas)
+  - [Twingate](#twingate)
+  - [Reverse Proxy](#reverse-proxy)
+  - [File Permissions](#file-permissions)
+  - [](#)
+- [Distributions](#distributions)
+  - [Lite](#lite)
+  - [Basic](#basic)
+  - [Full](#full)
+- [Quickstart](#quickstart)
+- [Usage Guide](#usage-guide)
+  - [Prerequisites](#prerequisites)
+  - [Configuration](#configuration)
+  - [Building](#building)
+- [Run the Docker Compose configuration:](#run-the-docker-compose-configuration)
+  - [Scaling](#scaling)
+  - [Maintainence & Monitoring](#maintainence--monitoring)
+
 </br>
 
 # Components & Features
@@ -93,8 +132,20 @@ Periodiccaly scans shared folders for known threats.
 
 </br>
 
+# System Requirements
+
+## Recomended
+## Basic
+## Swarm
+
+</br>
+
 # Limitations & Gotchas
 
+## Twingate
+## Reverse Proxy
+## File Permissions
+##
 </br>
 
 # Distributions
@@ -126,11 +177,11 @@ The server can now be brought up with the docker command
 
      docker-compose up plex qbittorrent jackett owncloud retroarch 
 
-if you did setup twingate simply tac 
+if you did setup twingate simply append 
 
     twingate twingate_redundant 
 
-on the end.
+Which would be:
 
     docker-compose up plex qbittorrent jackett owncloud retroarch  twingate twingate_redundant 
 
@@ -287,4 +338,4 @@ All containers can be built in multiples to create redundancy within the structu
 
 ### Docker swarm
 
-## Maintainence
+## Maintainence & Monitoring
