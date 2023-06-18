@@ -337,5 +337,6 @@ Multiple host redundancy with Docker Swarm where services and load can be distri
 All containers can be built in multiples to create redundancy within the structure of the media server. Performance overhead is minmial, allowing for more robust connections to the containers. 
 
 ### Docker swarm
+Use the docker_stack_deploy.py script to quickly deploy this stack to a swarm
 
 ## Maintainence & Monitoring

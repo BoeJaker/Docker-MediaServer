@@ -6,19 +6,19 @@ services:
   twingate:
     image: twingate/connector:1
     environment:
-      - TENANT_URL=${TENANT_URL}
-      - ACCESS_TOKEN=${ACCESS_TOKEN}
-      - REFRESH_TOKEN=${REFRESH_TOKEN}
-      - TWINGATE_LABEL_HOSTNAME=${TWINGATE_LABEL_HOSTNAME}
+      - TENANT_URL=https://boejaker.twingate.com
+      - ACCESS_TOKEN=eyJhbGciOiJFUzI1NiIsImtpZCI6IjVVeFFxVnlXWlJzTmxVQTVEZmZqTmdmc0Z3ZnN0MDZpZExXQ0dUblpiTDgiLCJ0eXAiOiJEQVQifQ.eyJudCI6IkFOIiwiYWlkIjoiODc3NDkiLCJkaWQiOiI2NDA3MDkiLCJqdGkiOiI4YTZhNTg3NS02YWQ1LTRkZjYtYTkxOC1jM2Y2NjExZTQ0ZGEiLCJpc3MiOiJ0d2luZ2F0ZSIsImF1ZCI6ImJvZWpha2VyIiwiZXhwIjoxNjg1NzUxODk3LCJpYXQiOjE2ODU3NDgyOTcsInZlciI6IjQiLCJ0aWQiOiIyMTY5MSIsInJudyI6MTY4NTc0ODU5Nywicm5ldGlkIjoiNDA4NDcifQ.-z_jkGLd9rstA5rfLbyf4Uj247f5Jq144tBdG6fAPcuEl0sLBDR2H2LWU8mniNdhqz5Dt9f0rOiGyF177f18wg
+      - REFRESH_TOKEN=QBNypZYVUcFmpQAAM9P1K2NO_osGYAIAWTZw8WcwNRuz1Ot7QjSMJ-hm-P01XKhcaUxScCVWvCkdDVaVzdxL-CR4kQ8pJ9IIapMl4RYBzYAizmRAAlKXH6PenLZHHMyvFkYmaw
+      - TWINGATE_LABEL_HOSTNAME=`hostname`
     restart: always
 
   twingate_redundant:
     image: twingate/connector:1
     environment:
-      - TENANT_URL=${TENANT_URL}
-      - ACCESS_TOKEN=${ACCESS_TOKEN_2}
-      - REFRESH_TOKEN=${REFRESH_TOKEN_2}
-      - TWINGATE_LABEL_HOSTNAME=${TWINGATE_LABEL_HOSTNAME}
+      - TENANT_URL=https://boejaker.twingate.com
+      - ACCESS_TOKEN=eyJhbGciOiJFUzI1NiIsImtpZCI6IlcwTXp0MmdqMmxmazctbkFSbnUzdHoxS3pmS1ZJcUFHRFFZeURDdW9TZWciLCJ0eXAiOiJEQVQifQ.eyJudCI6IkFOIiwiYWlkIjoiODc3NDgiLCJkaWQiOiI2NDA3MDgiLCJqdGkiOiI1MjQyYjA2Yy0xZjNjLTRjMGItOWExOC04ZWFmNzg4MDhkMzEiLCJpc3MiOiJ0d2luZ2F0ZSIsImF1ZCI6ImJvZWpha2VyIiwiZXhwIjoxNjg2MTU5MzgyLCJpYXQiOjE2ODYxNTU3ODIsInZlciI6IjQiLCJ0aWQiOiIyMTY5MSIsInJudyI6MTY4NjE1NjA4Miwicm5ldGlkIjoiNDA4NDcifQ.DkBQvNg2wUxnwKzCXc9gXUp-NRWJplPfjYzifyLZEYcrfK_s8mIe7gRzR921zwiLaOGWScUyibB1du-k06hF4Q
+      - REFRESH_TOKEN=L1TeWVMjtHHgpu-r8fNFs6cAcBAgWPBIuTRNjrbemNwU_ChvBU0ww5NR5xgV-URU17i0K3_sSygRmhntUbxzK1YOgooaQkRwkG2R10QoVZTTCXEivqbJ0eeCRXq20NkapWDLyA
+      - TWINGATE_LABEL_HOSTNAME=`hostname`
     restart: always
 
   # # Reverse proxy
@@ -28,7 +28,7 @@ services:
   #     context: ./
   #     dockerfile: ./reverse_proxy/.Dockerfile
   #   ports:
-  #     - ${REVERSE_PROXY_PORT}:80
+  #     - 80:80
   #   restart: always
   #   links:
   #     - "plex"
@@ -39,7 +39,7 @@ services:
   #     context: ./
   #     dockerfile: ./index/.Dockerfile
   #   ports:
-  #     - ${INDEX_PORT}:5000
+  #     - 81:5000
   #   volumes:
   #     - ./index/index.py:/index.py
   #     - ./index/templates:/templates
@@ -52,19 +52,19 @@ services:
     image: lscr.io/linuxserver/jackett:latest
     container_name: jackett
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
       - AUTO_UPDATE=true #optional
       # - RUN_OPTS= #optional
       - JACKETT_PROXY_TYPE=http
       - JACKETT_PROXY_HOST=vpn
-      - JACKETT_PROXY_PORT=${WIREGUARD_PORT}
+      - JACKETT_PROXY_PORT=51820
     volumes:
       - "./jackett/config:/config"
-      - "${TORRENTS}:/torrents"  # Folder for Jackett to save torrent files
+      - "./media/Seagate Wireless/torrents:/torrents"  # Folder for Jackett to save torrent files
     ports:
-      - ${JACKET_PORT}:9117
+      - 9117:9117
     restart: always
 
   qbittorrent:
@@ -78,9 +78,9 @@ services:
       - NET_RAW
       - SYS_MODULE
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ} 
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC 
       - WEBUI_PORT=8080  # Port for qbittorrent web UI
       - VPN_TYPE=wireguard
       - LAN_NETWORK=192.168.3.0/24
@@ -88,12 +88,12 @@ services:
       - HEALTH_CHECK_AMOUNT=0
     volumes:
       - "./qbittorrent/config:/config"
-      - "${TORRENTS}:/torrents"
-      - "${DOWNLOADS}:/downloads"
+      - "./media/Seagate Wireless/torrents:/torrents"
+      - "./media/Seagate Wireless/Download:/downloads"
     ports:
-      - ${QBITTORRENT_REQUEST_PORT}:6881
-      - ${QBITTORRENT_REQUEST_PORT}:6881/udp
-      - ${QBITTORRENT_HTTP_PORT}:8080
+      - 6881:6881
+      - 6881:6881/udp
+      - 8080:8080
     restart: always
 
 
@@ -104,17 +104,17 @@ services:
     network_mode: host
 
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
       - VERSION=docker
     expose:
       - 32400
     volumes:
       - ./plex:/config
-      - "${DOWNLOADS}:/downloads"  # Replace with your media directory
-      - "${FILMS}:/films"
-      - "${TV_SHOWS}:/tv"
+      - "./media/Seagate Wireless/Download:/downloads"  # Replace with your media directory
+      - "./media/Seagate Wireless/Videos/Films:/films"
+      - "./media/Seagate Wireless/Videos:/tv"
 
     # healthcheck:
     #   test: ["CMD-SHELL", "/healthchecks/file_permissions.sh", "/", "rw" ]
@@ -128,24 +128,24 @@ services:
 
   # Cloud Server
   owncloud:
-    image: owncloud/server:${OWNCLOUD_VERSION}
+    image: owncloud/server:latest
     container_name: owncloud_server
     restart: always
     ports:
-      - ${CLOUD_PORT}:8080
+      - 8081:8080
     depends_on:
       - mariadb
       - redis
     environment:
-      - OWNCLOUD_DOMAIN=${OWNCLOUD_DOMAIN}
-      - OWNCLOUD_TRUSTED_DOMAINS=${OWNCLOUD_TRUSTED_DOMAINS}
+      - OWNCLOUD_DOMAIN=localhost
+      - OWNCLOUD_TRUSTED_DOMAINS=192.168.3.0/24
       - OWNCLOUD_DB_TYPE=mysql
       - OWNCLOUD_DB_NAME=owncloud
       - OWNCLOUD_DB_USERNAME=owncloud
       - OWNCLOUD_DB_PASSWORD=owncloud
       - OWNCLOUD_DB_HOST=mariadb
-      - OWNCLOUD_ADMIN_USERNAME=${ADMIN_USERNAME}
-      - OWNCLOUD_ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - OWNCLOUD_ADMIN_USERNAME=boejaker
+      - OWNCLOUD_ADMIN_PASSWORD=£7370Adalovelace
       - OWNCLOUD_MYSQL_UTF8MB4=true
       - OWNCLOUD_REDIS_ENABLED=true
       - OWNCLOUD_REDIS_HOST=redis
@@ -155,10 +155,10 @@ services:
       timeout: 10s
       retries: 5
     volumes:
-      - "${OWNCLOUD_CONFIG}:/conf/config.php"
-      - "${FILES}:/mnt/data/files/boejaker/files"
-      # - "${MOUNT_A}:/mnt/data/files/boejaker/files/mount_a"
-      # - "${MOUNT_B}:/mnt/data/files/boejakerfiles/mount_b"
+      - "./owncloud:/conf/config.php"
+      - "/home/boejaker/OWNCLOUD:/mnt/data/files/boejaker/files"
+      # - "/media/boejaker/Seagate Wireless:/mnt/data/files/boejaker/files/mount_a"
+      # - "/media/boejaker/New Volume:/mnt/data/files/boejakerfiles/mount_b"
 
   mariadb:
     image: mariadb:10.6 # minimum required ownCloud version is 10.9
@@ -195,27 +195,27 @@ services:
   retroarch:
     image: inglebard/retroarch-web
     ports:
-      - ${RETROARCH_HTTP_PORT}:80 
+      - 7777:80 
     volumes:
-      - "${GAMES}:/var/www/html/assets/cores/ROMS"
+      - "./media/New Volume/Games:/var/www/html/assets/cores/ROMS"
     restart: always
 
   emu:
     image: linuxserver/emulatorjs
     ports:
-      - ${EMU_BACKEND_PORT}:3000
-      - ${EMU_FRONTEND_PORT}:80
+      - 3001:3000
+      - 8888:80
     volumes:
-      - "${GAMES}:/data/nes/roms"
+      - "./media/New Volume/Games:/data/nes/roms"
     restart: always
 
   clamav:
     image: clamav/clamav
     volumes:
-      - "${FILES}:/scan/home"
-      - "${MOUNT_A}:/scan/mount_a"
-      - "${MOUNT_B}:/scan/mount_b"
-      - "${CLAM_AV_LOG}:/var/log/clamav"
+      - "/home/boejaker/OWNCLOUD:/scan/home"
+      - "/media/boejaker/Seagate Wireless:/scan/mount_a"
+      - "/media/boejaker/New Volume:/scan/mount_b"
+      - "/clamav/logs:/var/log/clamav"
     environment:
       - CLAMAV_EXTRA_ARGS=--cross-fs=all
     restart: always
@@ -226,7 +226,7 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
-      - ${PROMETHEUS_PORT}:9090
+      - 9090:9090
     links:
       - cadvisor:cadvisor
       - grafana:grafana
@@ -236,7 +236,7 @@ services:
     image: grafana/grafana
     container_name: grafana
     ports:
-      - ${GRAFANA_PORT}:3000
+      - 3000:3000
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=your_password
     volumes:
@@ -249,7 +249,7 @@ services:
     container_name: cadvisor
     user: 10000:1000 # changed from 0:0
     ports:
-      - ${CADVISOR_PORT}:8080
+      - 8083:8080
     volumes:
       - /:/rootfs:ro
       - /sys:/sys:ro
