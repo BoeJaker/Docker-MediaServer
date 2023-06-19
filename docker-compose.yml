@@ -108,8 +108,6 @@ services:
       - PGID=${PGID}
       - TZ=${TZ}
       - VERSION=docker
-    expose:
-      - 32400
     volumes:
       - ./plex:/config
       - "${DOWNLOADS}:/downloads"  # Replace with your media directory
@@ -155,8 +153,8 @@ services:
       timeout: 10s
       retries: 5
     volumes:
-      - "${OWNCLOUD_CONFIG}:/conf/config.php"
-      - "${FILES}:/mnt/data/files/boejaker/files"
+      - "./owncloud:/conf/config.php"
+      - "${CLOUD_FILES}:/mnt/data/files/boejaker/files"
       # - "${MOUNT_A}:/mnt/data/files/boejaker/files/mount_a"
       # - "${MOUNT_B}:/mnt/data/files/boejakerfiles/mount_b"
 
@@ -212,10 +210,8 @@ services:
   clamav:
     image: clamav/clamav
     volumes:
-      - "${FILES}:/scan/home"
-      - "${MOUNT_A}:/scan/mount_a"
-      - "${MOUNT_B}:/scan/mount_b"
-      - "${CLAM_AV_LOG}:/var/log/clamav"
+      - "${FILES}:/scan"
+      - "/clamav/logs:/var/log/clamav"
     environment:
       - CLAMAV_EXTRA_ARGS=--cross-fs=all
     restart: always

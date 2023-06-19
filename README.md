@@ -21,15 +21,6 @@ A complete media server with on-demand videos & games, a cloud file server and a
   - [Recomended](#recomended)
   - [Basic](#basic)
   - [Swarm](#swarm)
-- [Limitations & Gotchas](#limitations--gotchas)
-  - [Twingate](#twingate)
-  - [Reverse Proxy](#reverse-proxy)
-  - [File Permissions](#file-permissions)
-  - [](#)
-- [Distributions](#distributions)
-  - [Lite](#lite)
-  - [Basic](#basic)
-  - [Full](#full)
 - [Quickstart](#quickstart)
 - [Usage Guide](#usage-guide)
   - [Prerequisites](#prerequisites)
@@ -38,6 +29,10 @@ A complete media server with on-demand videos & games, a cloud file server and a
 - [Run the Docker Compose configuration:](#run-the-docker-compose-configuration)
   - [Scaling](#scaling)
   - [Maintainence & Monitoring](#maintainence--monitoring)
+- [Distributions](#distributions)
+  - [Base](#base)
+  - [Full](#full)
+  - [Lite](#lite)
 
 </br>
 
@@ -135,57 +130,45 @@ Periodiccaly scans shared folders for known threats.
 # System Requirements
 
 ## Recomended
+4 Core, 2.6Ghz processor  
+16GB of RAM
 ## Basic
-## Swarm
+2 Core, 2Ghz processor  
+8GB of RAM
+## Swarm node
+2 Core 2Ghz processor  
+4gb of RAM
+
+Swarm node require much less power as they can be handling as little as a single container
 
 </br>
-
-# Limitations & Gotchas
-
-## Twingate
-## Reverse Proxy
-## File Permissions
-##
-</br>
-
-# Distributions
-## Lite  
-
-## Basic  
-
-## Full  
-
-</br>
-
-
-
 
 # Quickstart
 
 If your familiar with docker here is a quickstart guide so you can test the features.
 
-Open the .env.example file in the projects root directory, if your not using a vpn, set QBITTORRENTVPN to 'false' instead of 'true'. 
+Open the .env.example file in the projects root directory. 
 
-If you have an account with twingate, include your endpoint keys in the appropriate variables and if you have a VPN provider point to the location of the config with the VPN_CONFIG variable.
+If your not using a vpn, set QBITTORRENTVPN to 'false' instead of 'true'. 
+If you are using a vpn, drop your wiregaurd configuration file in qbittorrent/config/wireguard and ensure its named wg0.conf
 
-Amend the directories variable to match those of your systems media files
+If you would like to use twingate, include your endpoint keys (guide below) in the ACCESS_TOKEN & REFRESH_TOKEN variables, if not set TWINGATE to false.
+
+Amend the directories variables to match those of your systems media files
+FILES: The top level directory of your server
+TORRENTS : Where torrent files are stored and exchanged between jackett and qbitorrent
+DOWNLOADS: Where downloads are stored
+CLOUD_FILES: Where cloud files are stored
+GAMES: Games directory for retroarch
+TV_SHOWS : Plex TV shows location
+FILMS: Plex films location
 
 Note any passwords and usernames in the env file as they are the defaults and will be needed later to access services. 
 Then save the file as .env
 
 The server can now be brought up with the docker command
 
-     docker-compose up plex qbittorrent jackett owncloud retroarch 
-
-if you did setup twingate simply append 
-
-    twingate twingate_redundant 
-
-Which would be:
-
-    docker-compose up plex qbittorrent jackett owncloud retroarch  twingate twingate_redundant 
-
-Feel free to disclude services from this statement or add flags such as -d.
+     docker-compose up
 
 </br>
 
@@ -330,13 +313,39 @@ You can also specify a specific service, or services, for many of these commands
 
 ## Scaling
 The stack can be scaled in two ways. 
-Single host redundancy where multiple mirrored containers start for each servoce on one host.
+Single host redundancy where multiple mirrored containers start for each service on one host.
+
 Multiple host redundancy with Docker Swarm where services and load can be distributed between multiple host machines. If you have a raspberry pi, you can make a swarm.
 
 ### Single-Host Redundancy
-All containers can be built in multiples to create redundancy within the structure of the media server. Performance overhead is minmial, allowing for more robust connections to the containers. 
+All containers can be built in multiples to create redundancy within the structure of the media server. Performance overhead is minimal, allowing for more robust connections to the containers. 
 
 ### Docker swarm
+I have not implemented swarm functionality fully however i have made a quick script to allow the stack to be built on a swarm master node. This method of running the stack is not advised.
+
 Use the docker_stack_deploy.py script to quickly deploy this stack to a swarm
 
+  python docker_stack_deploy.py
+
+The script will replace the environment variable placeholders in the compose file with their values from the .env and save the result to a file name docker-compose-swarm.yml. Be careful with the generated file as it will contain sensitive info such as passwords and private keys.
+
+Ii have not implemented a way to start these services on a worker node but the swarm can be run over multiple managers. To start the stack on secondary managers copy or download docker -mediaserver to the target 
+Start docker
+Get the swarm key and network address including port number.
+Join the swarm
+Run the same script
+
 ## Maintainence & Monitoring
+
+# Variations
+There are 3 versions of the compose, base, full and lite.
+## Base / Swarm Manager 
+
+## Full 
+
+## Lite / Swarm Node
+
+##
+</br>
+
+
