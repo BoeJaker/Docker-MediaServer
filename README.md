@@ -168,43 +168,58 @@ With Grafana, you can connect to various data sources such as databases, cloud s
 
 # System Requirements
 
-## Recomended
-4 Core, 2.6Ghz processor  
-16GB of RAM
-## Basic
-2 Core, 2Ghz processor  
-8GB of RAM
-## Swarm node
-2 Core 2Ghz processor  
-4gb of RAM
+### Recomended
+For full performance with multiple clients  
 
+- 4 Core, 2.6Ghz processor  
+- 16GB of RAM  
+
+### Basic
+For single-player use    
+- 2 Core, 2Ghz processor  
+- 8GB of RAM
+
+### Swarm node
 Swarm node require much less power as they can be handling as little as a single container
+
+- 2 Core 2Ghz processor  
+- 4gb of RAM
+
 
 </br>
 
 # Quickstart
 
-### Configuration
+## Configuration
 
 If your familiar with docker here is a quickstart guide so you can test the features.
 
 Open the .env.example file in the projects root directory. 
 
-If your not using a vpn, set QBITTORRENTVPN to 'false' instead of 'true'. 
+If your not using a vpn, set 
+
+    QBITTORRENTVPN 
+
+to 'false' instead of 'true'.
+
 If you are using a vpn, drop your wiregaurd configuration file in qbittorrent/config/wireguard and ensure its named wg0.conf
 
-If you would like to use twingate, include your endpoint keys (guide below) in the ACCESS_TOKEN & REFRESH_TOKEN variables, if not set TWINGATE to false.
+If you would like to use twingate, include your endpoint keys (guide below) in the variables:
+
+    ACCESS_TOKEN 
+    REFRESH_TOKEN 
 
 Amend the directories variables to match those of your systems media files
-FILES: The top level directory of your server
-TORRENTS : Where torrent files are stored and exchanged between jackett and qbitorrent
-DOWNLOADS: Where downloads are stored
-CLOUD_FILES: Where cloud files are stored
-GAMES: Games directory for retroarch
-TV_SHOWS : Plex TV shows location
-FILMS: Plex films location
 
-### Build
+    FILES: The top level directory of your server
+    TORRENTS : Where torrent files are stored and exchanged between jackett and qbitorrent
+    DOWNLOADS: Where downloads are stored
+    CLOUD_FILES: Where cloud files are stored
+    GAMES: Games directory for retroarch
+    TV_SHOWS : Plex TV shows location
+    FILMS: Plex films location
+
+## Build
 
 Note any passwords and usernames in the env file as they are the defaults and will be needed later to access services. 
 Then save the file as .env
@@ -213,15 +228,15 @@ The server can now be brought up with the docker command
 
      docker-compose up
 
-### Access
+## Access
 
 Now type the following to see the services and their port numbers
 
-  docker stats 
+    docker stats 
 
 Access the service through a browser using 
   
-  http://localhost:PORT_NUMBER
+    http://localhost:PORT_NUMBER
 
 Replacing PORT_NUMBER with the port number of the service you would like to access
 
@@ -229,6 +244,10 @@ Replacing PORT_NUMBER with the port number of the service you would like to acce
 </br>
 
 # Getting Started
+
+To use all the features of this server you will need Docker, a twingate account and a VPN provider that supports P2P. If your on windows you will also neeed WSL2 installed for docker.
+
+Below is a guide on obtaining and setting up these prerequisites.
 
 </br>
 
@@ -241,9 +260,9 @@ Docker Compose typically comes bundled with Docker, so you don't need to install
 
 If you are using linux you need to add your user to the docker group using
 
-  sudo groupadd docker
-  sudo usermod -aG docker $USER
-  newgrp docker
+    sudo groupadd docker
+    sudo usermod -aG docker $USER
+    newgrp docker
 
 [Check here if you have issues](https://docs.docker.com/engine/install/linux-postinstall/)
 
@@ -330,21 +349,45 @@ Make sure to remember the location where you save the file for later use.
 Configuration is achieved through the .env file here you can set usernames, passwords, ports, directories and other key build info. 
 To start configuration save a copy of .env.example as .env and open it for editing. 
 
-Open the .env.example file in the projects root directory. 
+## Edit the .env
 
-If your not using a vpn, set QBITTORRENTVPN to 'false' instead of 'true'. 
+Open the .env.example file in the projects root directory and save it as .env 
+
+### Qbittorrent
+If your not using a vpn, set 
+    
+    QBITTORRENTVPN 
+
+to 'false' instead of 'true'. 
 If you are using a vpn, drop your wiregaurd configuration file in qbittorrent/config/wireguard and ensure its named wg0.conf
 
-If you would like to use twingate, include your endpoint keys (guide below) in the ACCESS_TOKEN & REFRESH_TOKEN variables, if not set TWINGATE to false.
+### Twingate
+If you would like to use twingate, include your endpoint keys (guide below) in the variables:
 
+    ACCESS_TOKEN
+    REFRESH_TOKEN 
+
+### ownCloud
+
+To use owncloud you must set 
+
+    OWNCLOUD_TRUSTED_DOMAINS
+    ADMIN_USERNAME
+    ADMIN_PASSWORD
+
+
+### Media Library
 Directories must be set for your media locations. Amend the directories variables to match those of your systems media files
-FILES: The top level directory of your server
-TORRENTS : Where torrent files are stored and exchanged between jackett and qbitorrent
-DOWNLOADS: Where downloads are stored
-CLOUD_FILES: Where cloud files are stored
-GAMES: Games directory for retroarch
-TV_SHOWS : Plex TV shows location
-FILMS: Plex films location
+
+    FILES: The top level directory of your server
+    TORRENTS : Where torrent files are stored and exchanged between jackett and qbitorrent
+    DOWNLOADS: Where downloads are stored
+    CLOUD_FILES: Where cloud files are stored
+    GAMES: Games directory for retroarch
+    TV_SHOWS : Plex TV shows location
+    FILMS: Plex films location
+
+### Ports
 
 Ports should be left in their default state unless you understand what you are doing.
 
@@ -371,6 +414,24 @@ Docker Compose will read the configuration file and start the containers accordi
 You will see the output and logs from the containers in the terminal or command prompt.
 Monitor the logs to ensure that the services are starting correctly and to debug any issues.
 Press `Ctrl+C` to stop the running services. This will gracefully stop and remove the containers.
+
+### Accessing services on the stack
+
+Now type the following to see the services and their port numbers
+
+    docker stats 
+
+Access the service through a browser using the URL
+  
+    http://localhost:PORT_NUMBER
+
+Replacing PORT_NUMBER with the port number of the service you would like to access
+
+for example if you want to reach plex type the URL
+
+    localhost:32400
+
+And plex will load in the browser. 
    
 ### Additional useful commands:
 
@@ -416,7 +477,7 @@ I have not implemented swarm functionality fully however i have made a quick scr
 
 Use the docker_stack_deploy.py script to quickly deploy this stack to a swarm
 
-  python docker_stack_deploy.py
+    python docker_stack_deploy.py
 
 The script will replace the environment variable placeholders in the compose file with their values from the .env and save the result to a file name docker-compose-swarm.yml. Be careful with the generated file as it will contain sensitive info such as passwords and private keys.
 
