@@ -13,7 +13,7 @@ They will be functional by version 2.2
 
 # Table of contents
 
-- [Docker Media Server](#docker-media-server)
+- [Docker Media Server version-0.2.1](#docker-media-server-version-021)
 - [Components & Features](#components--features)
   - [Twingate](#twingate)
   - [Reverse Proxy](#reverse-proxy)
@@ -28,19 +28,22 @@ They will be functional by version 2.2
 - [System Requirements](#system-requirements)
   - [Recomended](#recomended)
   - [Basic](#basic)
-  - [Swarm Node](#swarm)
+  - [Swarm node](#swarm-node)
 - [Quickstart](#quickstart)
-- [Usage Guide](#usage-guide)
-  - [Prerequisites](#prerequisites)
-  - [Configuration](#configuration)
-  - [Building](#building)
-- [Run the Docker Compose configuration:](#run-the-docker-compose-configuration)
-  - [Scaling](#scaling)
+- [Getting Started](#getting-started)
+  - [WSL - Windows only](#wsl---windows-only)
+  - [Docker - Required](#docker---required)
+  - [Twingate account - Optional](#twingate-account---optional)
+  - [VPN provider with support for p2p - Optional](#vpn-provider-with-support-for-p2p---optional)
+- [Configuration](#configuration)
+- [Building](#building)
+  - [Scaling & Redundancy](#scaling--redundancy)
   - [Maintainence & Monitoring](#maintainence--monitoring)
-- [Distributions](#distributions)
-  - [Base](#base)
-  - [Full](#full)
-  - [Lite](#lite)
+- [Variations](#variations)
+  - [Lite / Swarm Node](#lite--swarm-node)
+  - [Base / Swarm Manager](#base--swarm-manager)
+  - [Full / Compose Cluster](#full--compose-cluster)
+
 
 </br>
 
@@ -181,6 +184,8 @@ Swarm node require much less power as they can be handling as little as a single
 
 # Quickstart
 
+### Configuration
+
 If your familiar with docker here is a quickstart guide so you can test the features.
 
 Open the .env.example file in the projects root directory. 
@@ -199,12 +204,27 @@ GAMES: Games directory for retroarch
 TV_SHOWS : Plex TV shows location
 FILMS: Plex films location
 
+### Build
+
 Note any passwords and usernames in the env file as they are the defaults and will be needed later to access services. 
 Then save the file as .env
 
 The server can now be brought up with the docker command
 
      docker-compose up
+
+### Access
+
+Now type the following to see the services and their port numbers
+
+  docker stats 
+
+Access the service through a browser using 
+  
+  http://localhost:PORT_NUMBER
+
+Replacing PORT_NUMBER with the port number of the service you would like to access
+
 
 </br>
 
@@ -307,13 +327,24 @@ Make sure to remember the location where you save the file for later use.
 
 # Configuration
 
-Configuration is achieved through the .env file here you can set usernames, passwords, ports, directories and other key build info. To start configuration save a copy of .env.example as .env and open it for editing. 
+Configuration is achieved through the .env file here you can set usernames, passwords, ports, directories and other key build info. 
+To start configuration save a copy of .env.example as .env and open it for editing. 
 
-Each value is well described in the .env file, so they wont be outlined here. Each relates to environment variables used in the docker compose or within the containers themselves.
+Open the .env.example file in the projects root directory. 
 
-To start the twingate service you must input your twingate apikeys into those fields. Otherwise it will raise an error if you try to start that container
+If your not using a vpn, set QBITTORRENTVPN to 'false' instead of 'true'. 
+If you are using a vpn, drop your wiregaurd configuration file in qbittorrent/config/wireguard and ensure its named wg0.conf
 
-Volumes must be set for your media locations.
+If you would like to use twingate, include your endpoint keys (guide below) in the ACCESS_TOKEN & REFRESH_TOKEN variables, if not set TWINGATE to false.
+
+Directories must be set for your media locations. Amend the directories variables to match those of your systems media files
+FILES: The top level directory of your server
+TORRENTS : Where torrent files are stored and exchanged between jackett and qbitorrent
+DOWNLOADS: Where downloads are stored
+CLOUD_FILES: Where cloud files are stored
+GAMES: Games directory for retroarch
+TV_SHOWS : Plex TV shows location
+FILMS: Plex films location
 
 Ports should be left in their default state unless you understand what you are doing.
 
@@ -321,11 +352,10 @@ Ports should be left in their default state unless you understand what you are d
 
 # Building
 
-</br>
 
-## Run the Docker Compose configuration:
+### Composing the stack
 
-### Open a terminal or command prompt:
+Open a terminal or command prompt:
 
 Navigate to the directory where the Docker Compose file is located using the `cd` command.
 
@@ -382,7 +412,7 @@ Multiple host redundancy with Docker Swarm where services and load can be distri
 All containers can be built in multiples to create redundancy within the structure of the media server. Performance overhead is minimal, allowing for more robust connections to the containers. 
 
 ### Docker swarm
-I have not implemented swarm functionality fully however i have made a quick script to allow the stack to be built on a swarm master node. This method of running the stack is not advised.
+I have not implemented swarm functionality fully however i have made a quick script to allow the stack to be built on a swarm master node. As of version 0.2.0 this method of running the stack is not advised.
 
 Use the docker_stack_deploy.py script to quickly deploy this stack to a swarm
 
@@ -402,11 +432,16 @@ Run the same script
 
 # Variations
 There are 3 versions of the compose, base, full and lite.
-## Base / Swarm Manager 
-
-## Full 
 
 ## Lite / Swarm Node
+The lite image is generated using a script it can contain any combination of services and is used for deploying to nodes
+
+## Base / Swarm Manager 
+The base image contains all of the infrastructure for the rest of the containers
+mariadb, redis, cadvisor, grafana and prometheus
+
+## Full / Compose Cluster
+The full image is every service defined in the master docker compose file.
 
 ##
 </br>
