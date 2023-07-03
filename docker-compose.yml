@@ -1,20 +1,115 @@
 version: '3'
 
+volumes:
+  grafana_data:
+    driver: local
+  mysql:
+    driver: local
+  redis:
+    driver: local
+
+x-op-outbound_healthcheck: &outbound_healthcheck
+  test: ["CMD-SHELL", "/healthchecks/internet_connectivity.sh", "www.twingate.com" ]
+  interval: 1hr
+  timeout: 120s
+  start_period: 5s
+  retries: 4
+
+x-op-inbound_healthcheck: &inbound_healthcheck
+  test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh" ]
+  interval: 1hr
+  timeout: 120s
+  start_period: 5s
+  retries: 4
+
+x-op-misconfiguration_healthcheck: &misconfiguration_healthcheck
+  test: ["CMD-SHELL", "/healthchecks/misconfigurations.sh" ]
+  interval: 1hr
+  timeout: 120s
+  start_period: 5s
+  retries: 4
+
 services:
+    
+  # Virtual-network interfaces
+  twingate: &twingate
+    image: twingate/connector:1
+    environment:
+      - TENANT_URL=${TENANT_URL}
+      - ACCESS_TOKEN=${ACCESS_TOKEN}
+      - REFRESH_TOKEN=${REFRESH_TOKEN}
+      - TWINGATE_LABEL_HOSTNAME=${TWINGATE_LABEL_HOSTNAME}
 
-  <<: *twingate
-  condition:${DEPLOY_TWINGATE}
+    healthcheck:
+      <<: *outbound_healthcheck
+    #   test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh", "" ]
+    #   interval: 24hr
+    #   timeout: 120s
+    #   start_period: 5s
+    #   retries: 2
+      
+    restart: always
 
-  <<: *twingate_redundant
-  condition${DEPLOY_TWINGATE}
+  twingate_redundant: &twingate_redundant
+    image: twingate/connector:1
+    environment:
+      - TENANT_URL=${TENANT_URL}
+      - ACCESS_TOKEN=${ACCESS_TOKEN_2}
+      - REFRESH_TOKEN=${REFRESH_TOKEN_2}
+      - TWINGATE_LABEL_HOSTNAME=${TWINGATE_LABEL_HOSTNAME}
 
-  <<: *reverse-proxy
-  condition${DEPLOY_REVERSE_PROXY}
+    healthcheck:
+      <<: *outbound_healthcheck
+    #   test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh", "" ]
+    #   interval: 24hr
+    #   timeout: 120s
+    #   start_period: 5s
+    #   retries: 2
 
-  <<: *index
-  condition${DEPLOY_INDEX}
+    restart: always
 
-  
+  # Reverse proxy
+  reverse-proxy: &reverse-proxy
+    container_name: reverse-proxy
+    build:
+      context: ./
+      dockerfile: ./reverse_proxy/.Dockerfile
+    ports:
+      - ${REVERSE_PROXY_PORT}:80
+    links:
+      - "plex"
+
+    healthcheck:
+      <<: *outbound_healthcheck
+      test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh", "80" ]
+      interval: 24hr
+      timeout: 120s
+      start_period: 5s
+      retries: 2
+
+    restart: always
+
+  # Landing page / index
+  index: &index
+    container_name: index
+    build:
+      context: ./
+      dockerfile: ./index/.Dockerfile
+    ports:
+      - ${INDEX_PORT}:5000
+    volumes:
+      - ./index/index.py:/index.py
+      - ./index/templates:/templates
+    entrypoint: ["python","/index.py"]
+    healthcheck:
+      test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh", "5000" ]
+      interval: 24hr
+      timeout: 120s
+      start_period: 5s
+      retries: 2
+    restart: always
+
+
   # Torrent indexing and download
   jackett:
     image: lscr.io/linuxserver/jackett:latest
@@ -33,7 +128,17 @@ services:
       - "${TORRENTS}:/torrents"  # Folder for Jackett to save torrent files
     ports:
       - ${JACKET_PORT}:9117
+
+    healthcheck:
+      <<: *outbound_healthcheck
+    #   test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh", "" ]
+    #   interval: 24hr
+    #   timeout: 120s
+    #   start_period: 5s
+    #   retries: 2
+
     restart: always
+
 
   qbittorrent:
     image: dyonr/qbittorrentvpn
@@ -62,6 +167,15 @@ services:
       - ${QBITTORRENT_REQUEST_PORT}:6881
       - ${QBITTORRENT_REQUEST_PORT}:6881/udp
       - ${QBITTORRENT_HTTP_PORT}:8080
+    
+    healthcheck:
+      <<: *outbound_healthcheck
+    #   test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh", "" ]
+    #   interval: 24hr
+    #   timeout: 120s
+    #   start_period: 5s
+    #   retries: 2
+
     restart: always
 
 
@@ -126,10 +240,12 @@ services:
       # - "${MOUNT_A}:/mnt/data/files/boejaker/files/mount_a"
       # - "${MOUNT_B}:/mnt/data/files/boejakerfiles/mount_b"
 
+
   mariadb:
     image: mariadb:10.6 # minimum required ownCloud version is 10.9
     container_name: owncloud_mariadb
-    restart: always
+    volumes:
+      - mysql:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=owncloud
       - MYSQL_USER=owncloud
@@ -141,21 +257,22 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    volumes:
-      - mysql:/var/lib/mysql
+
+    restart: always
+
 
   redis:
     image: redis:6
     container_name: owncloud_redis
-    restart: always
+    volumes:
+      - redis:/data
     command: ["--databases", "1"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-    volumes:
-      - redis:/data
+    restart: always
   
   # Retroarch Server
   retroarch:
@@ -184,104 +301,41 @@ services:
       - CLAMAV_EXTRA_ARGS=--cross-fs=all
     restart: always
 
-  <<: *prometheus
-  condition:${DEPLOY_METRICS}
+  prometheus: 
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - ${PROMETHEUS_PORT}:9090
+    links:
+      - cadvisor:cadvisor
+      - grafana:grafana
+    restart: always
 
-  <<: *grafana
-  condition${DEPLOY_METRICS}
+  grafana: 
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - ${GRAFANA_PORT}:3000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=your_password
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: always
 
-  <<: *cadvisor
-  condition${DEPLOY_METRICS}
-
-x-prometheus: &prometheus
-  image: prom/prometheus
-  container_name: prometheus
-  volumes:
-    - ./prometheus.yml:/etc/prometheus/prometheus.yml
-  ports:
-    - ${PROMETHEUS_PORT}:9090
-  links:
-    - cadvisor:cadvisor
-    - grafana:grafana
-  restart: always
-
-x-grafana: &grafana
-  image: grafana/grafana
-  container_name: grafana
-  ports:
-    - ${GRAFANA_PORT}:3000
-  environment:
-    - GF_SECURITY_ADMIN_PASSWORD=your_password
-  volumes:
-    - grafana_data:/var/lib/grafana
-  restart: always
-
-x-cadvisor: &cadvisor
-  image: gcr.io/cadvisor/cadvisor
-  privileged: true
-  container_name: cadvisor
-  user: 10000:1000 # changed from 0:0
-  ports:
-    - ${CADVISOR_PORT}:8080
-  volumes:
-    - /:/rootfs:ro
-    - /sys:/sys:ro
-    - /var/lib/docker:/var/lib/docker:ro
-    - /var/run/docker.sock:/var/run/docker.sock
-  restart: always
-
-# Virtual-network interfaces
-x-twingate: &twingate
-  image: twingate/connector:1
-  environment:
-    - TENANT_URL=${TENANT_URL}
-    - ACCESS_TOKEN=${ACCESS_TOKEN}
-    - REFRESH_TOKEN=${REFRESH_TOKEN}
-    - TWINGATE_LABEL_HOSTNAME=${TWINGATE_LABEL_HOSTNAME}
-  restart: always
-
-x-twingate_redundant: &twingate_redundant
-  image: twingate/connector:1
-  environment:
-    - TENANT_URL=${TENANT_URL}
-    - ACCESS_TOKEN=${ACCESS_TOKEN_2}
-    - REFRESH_TOKEN=${REFRESH_TOKEN_2}
-    - TWINGATE_LABEL_HOSTNAME=${TWINGATE_LABEL_HOSTNAME}
-  restart: always
-
-# Reverse proxy
-x-reverse-proxy: &reverse-proxy
-  container_name: reverse-proxy
-  build:
-    context: ./
-    dockerfile: ./reverse_proxy/.Dockerfile
-  ports:
-    - ${REVERSE_PROXY_PORT}:80
-  restart: always
-  links:
-    - "plex"
-
-# Landing page / index
-x-index: &index
-  container_name: index
-  build:
-    context: ./
-    dockerfile: ./index/.Dockerfile
-  ports:
-    - ${INDEX_PORT}:5000
-  volumes:
-    - ./index/index.py:/index.py
-    - ./index/templates:/templates
-  entrypoint: ["python","/index.py"]
-  restart: always
-
-volumes:
-  grafana_data:
-    driver: local
-  mysql:
-    driver: local
-  redis:
-    driver: local
-
+  cadvisor: 
+    image: gcr.io/cadvisor/cadvisor
+    privileged: true
+    container_name: cadvisor
+    user: 1000:1000 # changed from 0:0
+    ports:
+      - ${CADVISOR_PORT}:8080
+    volumes:
+      - /:/rootfs:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
 
 

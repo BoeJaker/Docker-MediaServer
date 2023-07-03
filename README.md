@@ -279,7 +279,7 @@ Below is a guide on obtaining and setting up these prerequisites.
 </br>
 
 ## WSL - Windows only
-WSL2 (Windows Subsytem for Linux 2) is a linux VM (Virtual Machine) that docker uses to run containers this must be installed for docker to function as expected
+WSL2 (Windows Subsytem for Linux 2) is a linux VM (Virtual Machine) that docker uses to run containers this must be installed for docker to function as expected.
 
 ## Docker - Required
 If you haven't installed docker on your machine visit the Docker website (https://www.docker.com/) and follow the instructions to install Docker for your operating system.
