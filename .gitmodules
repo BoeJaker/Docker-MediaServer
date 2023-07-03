@@ -1,0 +1,3 @@
+[submodule "Docker-Healthchecks"]
+	path = Docker-Healthchecks
+	url = https://github.com/BoeJaker/Docker-Healthchecks.git
