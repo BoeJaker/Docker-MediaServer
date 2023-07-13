@@ -1,5 +1,8 @@
 version: '3'
 
+# Volumes
+##################
+
 volumes:
   grafana_data:
     driver: local
@@ -8,64 +11,48 @@ volumes:
   redis:
     driver: local
 
-x-op-outbound_healthcheck: &outbound_healthcheck
-  test: ["CMD-SHELL", "/healthchecks/internet_connectivity.sh", "www.twingate.com" ]
+# Helathchecks
+##################
+  
+x-op-connectivity_healthcheck: &connectivity_healthcheck
+  test: ["CMD-SHELL", "/Docker-Healthchecks/internet_connectivity.sh", "--url","www.twingate.com" ]
   interval: 1hr
   timeout: 120s
   start_period: 5s
   retries: 4
 
-x-op-inbound_healthcheck: &inbound_healthcheck
-  test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh" ]
+x-op-file_perms_healthcheck: &file_perms_healthcheck
+  test: ["CMD-SHELL", "/Docker-Healthchecks/misconfigurations.sh" ]
   interval: 1hr
   timeout: 120s
   start_period: 5s
   retries: 4
 
-x-op-misconfiguration_healthcheck: &misconfiguration_healthcheck
-  test: ["CMD-SHELL", "/healthchecks/misconfigurations.sh" ]
-  interval: 1hr
-  timeout: 120s
-  start_period: 5s
-  retries: 4
-
+# Services
+##################
 services:
     
   # Virtual-network interfaces
-  twingate: &twingate
+  twingate:
     image: twingate/connector:1
     environment:
       - TENANT_URL=${TENANT_URL}
       - ACCESS_TOKEN=${ACCESS_TOKEN}
       - REFRESH_TOKEN=${REFRESH_TOKEN}
       - TWINGATE_LABEL_HOSTNAME=${TWINGATE_LABEL_HOSTNAME}
-
     healthcheck:
-      <<: *outbound_healthcheck
-    #   test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh", "" ]
-    #   interval: 24hr
-    #   timeout: 120s
-    #   start_period: 5s
-    #   retries: 2
-      
+      <<: *connectivity_healthcheck
     restart: always
 
-  twingate_redundant: &twingate_redundant
+  twingate_redundant:
     image: twingate/connector:1
     environment:
       - TENANT_URL=${TENANT_URL}
       - ACCESS_TOKEN=${ACCESS_TOKEN_2}
       - REFRESH_TOKEN=${REFRESH_TOKEN_2}
       - TWINGATE_LABEL_HOSTNAME=${TWINGATE_LABEL_HOSTNAME}
-
     healthcheck:
-      <<: *outbound_healthcheck
-    #   test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh", "" ]
-    #   interval: 24hr
-    #   timeout: 120s
-    #   start_period: 5s
-    #   retries: 2
-
+      <<: *connectivity_healthcheck
     restart: always
 
   # Reverse proxy
@@ -78,15 +65,8 @@ services:
       - ${REVERSE_PROXY_PORT}:80
     links:
       - "plex"
-
     healthcheck:
-      <<: *outbound_healthcheck
-      test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh", "80" ]
-      interval: 24hr
-      timeout: 120s
-      start_period: 5s
-      retries: 2
-
+      <<: *connectivity_healthcheck
     restart: always
 
   # Landing page / index
@@ -102,44 +82,33 @@ services:
       - ./index/templates:/templates
     entrypoint: ["python","/index.py"]
     healthcheck:
-      test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh", "5000" ]
-      interval: 24hr
-      timeout: 120s
-      start_period: 5s
-      retries: 2
+      <<: *connectivity_healthcheck
     restart: always
 
 
-  # Torrent indexing and download
+  # Torrent indexing
   jackett:
     image: lscr.io/linuxserver/jackett:latest
     container_name: jackett
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=${TZ}
-      - AUTO_UPDATE=true #optional
-      # - RUN_OPTS= #optional
+      - TZ=${TZ} 
+      - AUTO_UPDATE=true
       - JACKETT_PROXY_TYPE=http
       - JACKETT_PROXY_HOST=vpn
       - JACKETT_PROXY_PORT=${WIREGUARD_PORT}
+      
     volumes:
       - "./jackett/config:/config"
-      - "${TORRENTS}:/torrents"  # Folder for Jackett to save torrent files
+      - "${TORRENTS}:/torrents"  
     ports:
       - ${JACKET_PORT}:9117
-
     healthcheck:
-      <<: *outbound_healthcheck
-    #   test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh", "" ]
-    #   interval: 24hr
-    #   timeout: 120s
-    #   start_period: 5s
-    #   retries: 2
-
+      <<: *connectivity_healthcheck
     restart: always
 
-
+  # Torrent client with VPN & web GUI
   qbittorrent:
     image: dyonr/qbittorrentvpn
     container_name: qbittorrent
@@ -154,11 +123,11 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ} 
-      - WEBUI_PORT=8080  # Port for qbittorrent web UI
+      - WEBUI_PORT=8080 
       - VPN_TYPE=wireguard
       - LAN_NETWORK=192.168.3.0/24
       - VPN_ENABLED=yes
-      - HEALTH_CHECK_AMOUNT=0
+      - HEALTH_CHECK_AMOUNT=1
     volumes:
       - "./qbittorrent/config:/config"
       - "${TORRENTS}:/torrents"
@@ -167,15 +136,8 @@ services:
       - ${QBITTORRENT_REQUEST_PORT}:6881
       - ${QBITTORRENT_REQUEST_PORT}:6881/udp
       - ${QBITTORRENT_HTTP_PORT}:8080
-    
     healthcheck:
-      <<: *outbound_healthcheck
-    #   test: ["CMD-SHELL", "/healthchecks/port_connectivity.sh", "" ]
-    #   interval: 24hr
-    #   timeout: 120s
-    #   start_period: 5s
-    #   retries: 2
-
+      <<: *connectivity_healthcheck
     restart: always
 
 
@@ -184,25 +146,18 @@ services:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
     network_mode: host
-
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=${TZ}
+      - TZ=${TZ} 
       - VERSION=docker
     volumes:
       - ./plex:/config
-      - "${DOWNLOADS}:/downloads"  # Replace with your media directory
+      - "${DOWNLOADS}:/downloads"  
       - "${FILMS}:/films"
       - "${TV_SHOWS}:/tv"
-
-    # healthcheck:
-    #   test: ["CMD-SHELL", "/healthchecks/file_permissions.sh", "/", "rw" ]
-    #   interval: 24hr
-    #   timeout: 120s
-    #   start_period: 5s
-    #   retries: 2
-      
+    healthcheck:
+      <<: *file_perms_healthcheck
     restart: always
 
 
@@ -221,8 +176,8 @@ services:
       - OWNCLOUD_TRUSTED_DOMAINS=${OWNCLOUD_TRUSTED_DOMAINS}
       - OWNCLOUD_DB_TYPE=mysql
       - OWNCLOUD_DB_NAME=owncloud
-      - OWNCLOUD_DB_USERNAME=owncloud
-      - OWNCLOUD_DB_PASSWORD=owncloud
+      - OWNCLOUD_DB_USERNAME=${OWNCLOUD_DB_USER}
+      - OWNCLOUD_DB_PASSWORD=${OWNCLOUD_DB_PASSWORD}
       - OWNCLOUD_DB_HOST=mariadb
       - OWNCLOUD_ADMIN_USERNAME=${ADMIN_USERNAME}
       - OWNCLOUD_ADMIN_PASSWORD=${ADMIN_PASSWORD}
@@ -237,19 +192,16 @@ services:
     volumes:
       - "./owncloud:/conf/config.php"
       - "${CLOUD_FILES}:/mnt/data/files/boejaker/files"
-      # - "${MOUNT_A}:/mnt/data/files/boejaker/files/mount_a"
-      # - "${MOUNT_B}:/mnt/data/files/boejakerfiles/mount_b"
-
 
   mariadb:
-    image: mariadb:10.6 # minimum required ownCloud version is 10.9
+    image: mariadb:10.6 
     container_name: owncloud_mariadb
     volumes:
       - mysql:/var/lib/mysql
     environment:
-      - MYSQL_ROOT_PASSWORD=owncloud
-      - MYSQL_USER=owncloud
-      - MYSQL_PASSWORD=owncloud
+      - MYSQL_ROOT_PASSWORD=${OWNCLOUD_MYSQL_ROOT}
+      - MYSQL_USER=${OWNCLOUD_DB_USER}
+      - MYSQL_PASSWORD=${OWNCLOUD_DB_PASSWORD}
       - MYSQL_DATABASE=owncloud
     command: ["--max-allowed-packet=128M", "--innodb-log-file-size=64M"]
     healthcheck:
@@ -257,9 +209,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
     restart: always
-
 
   redis:
     image: redis:6
@@ -274,6 +224,7 @@ services:
       retries: 5
     restart: always
   
+
   # Retroarch Server
   retroarch:
     image: inglebard/retroarch-web
@@ -281,7 +232,9 @@ services:
       - ${RETROARCH_HTTP_PORT}:80 
     volumes:
       - "${GAMES}:/var/www/html/assets/cores/ROMS"
-    restart: always
+    healthcheck:
+      <<: *connectivity_healthcheck
+    restart: unless-stopped
 
   emu:
     image: linuxserver/emulatorjs
@@ -290,8 +243,11 @@ services:
       - ${EMU_FRONTEND_PORT}:80
     volumes:
       - "${GAMES}:/data/nes/roms"
-    restart: always
+    healthcheck:
+      <<: *connectivity_healthcheck
+    restart: unless-stopped
 
+  # Antivirus
   clamav:
     image: clamav/clamav
     volumes:
@@ -299,7 +255,12 @@ services:
       - "/clamav/logs:/var/log/clamav"
     environment:
       - CLAMAV_EXTRA_ARGS=--cross-fs=all
+    healthcheck:
+      <<: *file_perms_healthcheck
     restart: always
+
+  # Metrics
+  ################
 
   prometheus: 
     image: prom/prometheus
@@ -328,7 +289,7 @@ services:
     image: gcr.io/cadvisor/cadvisor
     privileged: true
     container_name: cadvisor
-    user: 1000:1000 # changed from 0:0
+    user: 1000:1000 
     ports:
       - ${CADVISOR_PORT}:8080
     volumes:
@@ -336,6 +297,8 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker:/var/lib/docker:ro
       - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      <<: *file_perms_healthcheck
     restart: always
 
 

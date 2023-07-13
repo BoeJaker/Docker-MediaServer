@@ -1,3 +1,6 @@
+"""
+Switches VPN connection by rotating the wireguard config files after a threshold of data-use or latency is met. It also checks configs for expiration.
+"""
 import psutil
 import subprocess
 import time
