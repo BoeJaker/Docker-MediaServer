@@ -12,3 +12,6 @@ snyk-linux
 node_modules
 manager
 docker-compose-swarm.yml
+./index
+index/templates/index.py
+index/templates/index.html

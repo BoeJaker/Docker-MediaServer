@@ -31,9 +31,27 @@ x-op-file_perms_healthcheck: &file_perms_healthcheck
 # Services
 ##################
 services:
-    
-  # Virtual-network interfaces
+
+  # Meta-Services
+
   twingate:
+    image: tianon/true
+    depends_on: [twingate_a, twingate_b]
+
+  media:
+    image: tianon/true
+    depends_on: [plex, qbitorrent, jackett]  
+
+  metrics:
+    image: tianon/true
+    depends_on: [cadvisor, prometheus, grafana]
+
+  extras:
+    image: tianon/true
+    depends_on: [reverse-proxy, index]
+
+  # Virtual-network interfaces
+  twingate_a:
     image: twingate/connector:1
     environment:
       - TENANT_URL=${TENANT_URL}
@@ -44,7 +62,7 @@ services:
       <<: *connectivity_healthcheck
     restart: always
 
-  twingate_redundant:
+  twingate_b:
     image: twingate/connector:1
     environment:
       - TENANT_URL=${TENANT_URL}
@@ -78,9 +96,8 @@ services:
     ports:
       - ${INDEX_PORT}:5000
     volumes:
-      - ./index/index.py:/index.py
-      - ./index/templates:/templates
-    entrypoint: ["python","/index.py"]
+      - ./Docker-Service-Dashboard/:/app
+    entrypoint: ["python","/app/ServiceDashboard.py"]
     healthcheck:
       <<: *connectivity_healthcheck
     restart: always
@@ -107,6 +124,7 @@ services:
     healthcheck:
       <<: *connectivity_healthcheck
     restart: always
+
 
   # Torrent client with VPN & web GUI
   qbittorrent:
@@ -266,7 +284,7 @@ services:
     image: prom/prometheus
     container_name: prometheus
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - ${PROMETHEUS_PORT}:9090
     links:
